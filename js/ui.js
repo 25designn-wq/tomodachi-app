@@ -170,16 +170,21 @@ export function enableSwipeNav(el, current) {
   el.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
 }
 
-// 下部ナビ（よていが主役＝先頭）
+// 下部ナビ（よていが主役＝先頭）。
+// #app の外にある #bottomnav-host を直接更新して表示する。
+// transform アニメーション中も fixed 位置が崩れない。
 export function bottomNav(active) {
+  const host = document.getElementById('bottomnav-host');
   const tab = (id, icon, label) => h('button',
     { class: 'nav-tab' + (active === id ? ' on' : ''), onclick: () => { if (active !== id) navigate(id); } },
     h('span', { class: 'nav-ico' }, icon),
     h('span', { class: 'nav-lbl' }, label),
   );
-  return h('nav', { class: 'bottomnav' },
-    tab('events', '🗓', 'よてい'),
-    tab('home', '✨', 'ひろば'),
-    tab('activity', '🔔', 'お知らせ'),
-  );
+  const tabs = [tab('events', '🗓', 'よてい'), tab('home', '✨', 'ひろば'), tab('activity', '🔔', 'お知らせ')];
+  if (host) {
+    host.replaceChildren(...tabs);
+    host.hidden = false;
+    return null; // h() は null の子をスキップする
+  }
+  return h('nav', { class: 'bottomnav' }, ...tabs); // host 未存在時のフォールバック
 }
