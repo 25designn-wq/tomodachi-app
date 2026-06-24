@@ -1,7 +1,7 @@
-import { h } from '../dom.js';
+import { h, setChildren } from '../dom.js';
 import { getMe, getGroup } from '../state.js';
 import { getStore } from '../firebase.js';
-import { CATEGORIES, catMeta, urlCard, REACTIONS, timeAgo, bottomNav } from '../ui.js';
+import { CATEGORIES, catMeta, urlCard, REACTIONS, timeAgo, bottomNav, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
 import { openPostFlow } from '../postflow.js';
 import { throwBurst, playBarrage } from '../effects.js';
@@ -47,7 +47,7 @@ export default async function home(params = {}) {
 
   const drawPile = (el, emp) => {
     const names = Object.keys(emp || {});
-    el.replaceChildren(
+    setChildren(el,
       ...names.slice(0, 5).map(n => h('span', { class: 'dot', style: { background: colorFor(n) } }, n.slice(0, 1))),
       names.length > 5 ? h('span', { class: 'more' }, '+' + (names.length - 5)) : null,
     );
@@ -198,6 +198,7 @@ export default async function home(params = {}) {
     bottomNav('home'),
   );
   el.__cleanup = unsub;
+  enableSwipeNav(el, 'home');
   render();
   return el;
 }

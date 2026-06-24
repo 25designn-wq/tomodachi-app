@@ -21,6 +21,12 @@ export function h(tag, props = {}, ...children) {
 export const $  = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+// el.replaceChildren() は null/false を文字列 "null"/"false" にして挿入してしまう。
+// h() と同じく null/false の子をスキップしてから差し替える安全版。
+export function setChildren(el, ...children) {
+  el.replaceChildren(...children.flat().filter(c => c != null && c !== false));
+}
+
 // 戻るボタン付きトップバー
 export function topbar(title, onBack) {
   return h('div', { class: 'topbar' },

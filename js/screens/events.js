@@ -1,7 +1,7 @@
 import { h } from '../dom.js';
 import { getMe, getGroup } from '../state.js';
 import { getStore } from '../firebase.js';
-import { bottomNav, timeAgo, fmtDate } from '../ui.js';
+import { bottomNav, timeAgo, fmtDate, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
 import { openEventFlow } from '../eventflow.js';
 
@@ -78,6 +78,7 @@ export default async function events() {
     bottomNav('events'),
   );
   el.__cleanup = unsub;
+  enableSwipeNav(el, 'events');
   render();
   return el;
 }

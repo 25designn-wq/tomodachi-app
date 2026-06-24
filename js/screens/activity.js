@@ -1,7 +1,7 @@
 import { h } from '../dom.js';
 import { getMe, getGroup } from '../state.js';
 import { getStore } from '../firebase.js';
-import { catMeta, timeAgo, bottomNav } from '../ui.js';
+import { catMeta, timeAgo, bottomNav, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
 
 const COLORS = ['#ff7a45', '#10b981', '#6366f1', '#ef4444', '#0ea5e9', '#f59e0b', '#7c5cff'];
@@ -268,6 +268,7 @@ export default async function activity(params = {}) {
     bottomNav('activity'),
   );
   el.__cleanup = () => { unsub1?.(); unsub2?.(); };
+  enableSwipeNav(el, 'activity');
   render();
   return el;
 }

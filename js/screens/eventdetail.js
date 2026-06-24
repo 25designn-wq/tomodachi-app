@@ -1,4 +1,4 @@
-import { h, topbar } from '../dom.js';
+import { h, topbar, setChildren } from '../dom.js';
 import { getMe, getGroup } from '../state.js';
 import { getStore } from '../firebase.js';
 import { fmtDate, catMeta } from '../ui.js';
@@ -164,7 +164,7 @@ export default async function eventdetail(params = {}) {
             'この予定を削除');
     }
 
-    body.replaceChildren(
+    setChildren(body,
       ev.confirmed ? h('div', { class: 'ev-confirmed-banner' }, '🎉 この予定は決行確定！') : null,
       h('div', { class: 'item-head' },
         h('span', { class: 'kind-badge' + (ev.kind === 'loose' ? ' loose' : '') },

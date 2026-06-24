@@ -95,6 +95,62 @@ export function urlCard(url) {
   );
 }
 
+// アバターの色（名前から決定的に決める）
+const AVATAR_COLORS = ['#ff7a45', '#10b981', '#6366f1', '#ef4444', '#0ea5e9', '#f59e0b', '#7c5cff'];
+export const avatarColor = s => AVATAR_COLORS[[...(s || '?')].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
+
+// グループ内のデータから「参加している人」を集計する。
+// このアプリにはユーザー登録の概念がないので、投稿・投票・俺も・リアクション・
+// 感想などに出てくる名前を拾って、活動量の多い順に並べる。
+export function collectMembers(items = [], events = [], me = '') {
+  const counts = new Map();
+  const bump = (name, n = 1) => {
+    if (!name || typeof name !== 'string') return;
+    counts.set(name, (counts.get(name) || 0) + n);
+  };
+  (items || []).forEach(it => {
+    bump(it.createdBy);
+    Object.keys(it.empathy || {}).forEach(n => bump(n));
+    Object.values(it.reactions || {}).forEach(arr => (Array.isArray(arr) ? arr : []).forEach(n => bump(n)));
+    (Array.isArray(it.done) ? it.done : []).forEach(n => bump(n));
+    (Array.isArray(it.reviews) ? it.reviews : []).forEach(r => {
+      bump(r.by);
+      (Array.isArray(r.likes) ? r.likes : []).forEach(n => bump(n));
+    });
+  });
+  (events || []).forEach(ev => {
+    bump(ev.createdBy);
+    Object.keys(ev.votes || {}).forEach(n => bump(n));
+  });
+  if (me) bump(me, 0); // 自分は活動0でも必ず一覧に出す
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count, isMe: name === me }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ja'));
+}
+
+// 主要3画面の横スワイプ移動（よてい ↔ ひろば ↔ お知らせ）。
+// 横スクロールするUI（カテゴリバー等）や入力欄の上では無効。
+const SWIPE_ORDER = ['events', 'home', 'activity'];
+export function enableSwipeNav(el, current) {
+  const idx = SWIPE_ORDER.indexOf(current);
+  if (idx < 0) return;
+  let x0 = 0, y0 = 0, t0 = 0, tracking = false;
+  el.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || e.target.closest('.catbar, .chips, input, textarea')) { tracking = false; return; }
+    const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); tracking = true;
+  }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    if (Date.now() - t0 > 600) return;            // ゆっくりすぎる動きは無視
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.8) return; // 横方向がはっきりしている時だけ
+    const next = SWIPE_ORDER[idx + (dx < 0 ? 1 : -1)]; // 左スワイプ→次の画面
+    if (next) navigate(next);
+  }, { passive: true });
+}
+
 // 下部ナビ（よていが主役＝先頭）
 export function bottomNav(active) {
   const tab = (id, icon, label) => h('button',
