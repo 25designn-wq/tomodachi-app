@@ -4,6 +4,7 @@ import { getStore } from '../firebase.js';
 import { bottomNav, timeAgo, fmtDate, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
 import { openEventFlow } from '../eventflow.js';
+import { openTeruteruFlow } from '../teruteru.js';
 
 export default async function events() {
   const me = getMe();
@@ -12,6 +13,24 @@ export default async function events() {
 
   let list = [];
   const listEl = h('div', { class: 'feed' });
+
+  // ---- てるてる坊主 ----
+  const countKey = `ojisan_${group}_teruteru`;
+  const getTeruCount = () => parseInt(localStorage.getItem(countKey) || '0');
+  const teruCountEl = h('span', { class: 'teru-count-badge' });
+  const refreshTeruCount = () => {
+    const n = getTeruCount();
+    teruCountEl.textContent = n > 0 ? `🌂 ${n}体` : '';
+  };
+  refreshTeruCount();
+  const teruStrip = h('button', { class: 'teru-strip',
+    onclick: () => openTeruteruFlow({ group, onComplete: (n) => {
+      teruCountEl.textContent = `🌂 ${n}体`;
+    }}),
+  },
+    h('span', { class: 'teru-strip-label' }, '☁️ てるてる坊主を作る'),
+    teruCountEl,
+  );
 
   const render = () => {
     listEl.replaceChildren(...(list.length ? list.map(card) : [emptyState()]));
@@ -73,7 +92,7 @@ export default async function events() {
       h('div', { class: 'brand' }, h('span', { class: 'brand-ico' }, '🍻'), h('span', {}, 'あそ部活')),
       h('button', { class: 'me-chip', onclick: () => navigate('settings') }, me, ' ⚙'),
     ),
-    h('div', { class: 'scroll' }, listEl),
+    h('div', { class: 'scroll' }, teruStrip, listEl),
     h('button', { class: 'fab', onclick: () => openEventFlow({ store, group, me }) }, '＋'),
     bottomNav('events'),
   );
