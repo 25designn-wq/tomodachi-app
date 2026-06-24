@@ -1,7 +1,7 @@
 // オフライン対応。同一オリジンは network-first（古いJSが残りにくい）、
 // 失敗時にキャッシュへフォールバック。外部(Firebase/gstatic)は素通し。
-const CACHE = 'ojibu-v2';
-const CORE = ['.', 'index.html', 'css/style.css', 'js/app.js', 'manifest.json', 'icons/icon.svg'];
+const CACHE = 'ojibu-v3';
+const CORE = ['.', 'index.html', 'css/style.css', 'js/app.js', 'manifest.json', 'icons/icon.svg', 'icons/teruteru.svg', 'icons/teruteru-sad.svg'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
