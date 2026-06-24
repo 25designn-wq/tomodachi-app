@@ -5,35 +5,108 @@ import { bottomNav, timeAgo, fmtDate, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
 import { openEventFlow } from '../eventflow.js';
 import { openTeruteruFlow } from '../teruteru.js';
+import { checkWeather } from '../teruteru-weather.js';
+
+// 確定予定の「ベスト候補日」を返す（YYYY-MM-DD）
+function bestDate(ev) {
+  const dates = ev.dates || [];
+  if (!dates.length) return null;
+  const votes = ev.votes || {};
+  return dates
+    .map(d => ({ d, yes: Object.values(votes).filter(v => v[d] === 'yes').length }))
+    .sort((a, b) => b.yes - a.yes)[0]?.d ?? null;
+}
+
+// YYYY-MM-DD から今日起点の日数（正=未来、0=今日、負=過去）
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const [y, mo, da] = dateStr.split('-').map(Number);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.round((new Date(y, mo - 1, da) - today) / 86400000);
+}
+
+// 確定した予定のカウントダウン目標日をリセットチェック
+function checkTeruReset(group, list) {
+  const countKey  = `ojisan_${group}_teruteru`;
+  const targetKey = `ojisan_${group}_teruteru_target`;
+  const stored    = localStorage.getItem(targetKey);
+  if (!stored) return;
+  const [y, mo, da] = stored.split('-').map(Number);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (new Date(y, mo - 1, da) < today) {
+    localStorage.setItem(countKey, '0');
+    localStorage.removeItem(targetKey);
+  }
+}
+
+// ソート: 確定を近い順 → 非確定を投稿新しい順
+function sortEvents(a, b) {
+  const ac = !!a.confirmed, bc = !!b.confirmed;
+  if (ac !== bc) return ac ? -1 : 1;
+  if (ac) {
+    const ad = bestDate(a), bd = bestDate(b);
+    if (!ad && !bd) return 0;
+    if (!ad) return 1; if (!bd) return -1;
+    return ad.localeCompare(bd);
+  }
+  return (b.createdAt || 0) - (a.createdAt || 0);
+}
 
 export default async function events() {
-  const me = getMe();
+  const me    = getMe();
   const group = getGroup();
   const store = await getStore();
 
   let list = [];
   const listEl = h('div', { class: 'feed' });
 
-  // ---- てるてる坊主 ----
+  // ---- てるてる坊主バッジ ----
   const countKey = `ojisan_${group}_teruteru`;
-  const getTeruCount = () => parseInt(localStorage.getItem(countKey) || '0');
+
   const teruCountEl = h('span', { class: 'teru-count-badge' });
   const refreshTeruCount = () => {
-    const n = getTeruCount();
-    teruCountEl.textContent = n > 0 ? `🌂 ${n}体` : '';
+    const n = parseInt(localStorage.getItem(countKey) || '0');
+    if (n > 0) {
+      teruCountEl.replaceChildren(
+        h('img', { src: 'icons/teruteru.svg', class: 'teru-badge-icon', alt: '' }),
+        ` ${n}体`,
+      );
+    } else {
+      teruCountEl.replaceChildren();
+    }
   };
   refreshTeruCount();
+
   const teruStrip = h('button', { class: 'teru-strip',
     onclick: () => openTeruteruFlow({ group, onComplete: (n) => {
-      teruCountEl.textContent = `🌂 ${n}体`;
+      // 最寄りの確定予定日をリセット目標として記録
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const nearest = [...list]
+        .filter(ev => ev.confirmed)
+        .map(ev => bestDate(ev))
+        .filter(Boolean)
+        .sort()
+        .find(d => {
+          const [y, mo, da] = d.split('-').map(Number);
+          return new Date(y, mo - 1, da) >= today;
+        });
+      if (nearest) localStorage.setItem(`ojisan_${group}_teruteru_target`, nearest);
+      refreshTeruCount();
     }}),
   },
-    h('span', { class: 'teru-strip-label' }, '☁️ てるてる坊主を作る'),
+    h('div', { class: 'teru-strip-left' },
+      h('img', { src: 'icons/teruteru.svg', class: 'teru-icon', alt: '' }),
+      h('span', { class: 'teru-strip-label' }, 'てるてる坊主を作る'),
+    ),
     teruCountEl,
   );
 
   const render = () => {
-    listEl.replaceChildren(...(list.length ? list.map(card) : [emptyState()]));
+    checkTeruReset(group, list);
+    refreshTeruCount();
+    checkWeather({ group, list, onReset: refreshTeruCount });
+    const sorted = [...list].sort(sortEvents);
+    listEl.replaceChildren(...(sorted.length ? sorted.map(card) : [emptyState()]));
   };
 
   const emptyState = () => h('div', { class: 'empty' },
@@ -43,9 +116,9 @@ export default async function events() {
   );
 
   const card = (ev) => {
-    const votes = ev.votes || {};
-    const dates = ev.dates || [];
-    const ideas = ev.ideas || [];
+    const votes     = ev.votes     || {};
+    const dates     = ev.dates     || [];
+    const ideas     = ev.ideas     || [];
     const looseSlots = ev.looseSlots || [];
 
     const tally = dates.map(d => {
@@ -57,7 +130,17 @@ export default async function events() {
 
     let dateInfo;
     if (ev.confirmed) {
-      dateInfo = h('p', { class: 'ev-confirmed-line' }, '✅ 決行確定！');
+      const d    = bestDate(ev);
+      const days = daysUntil(d);
+      if (days !== null) {
+        const numTxt = days > 0 ? `あと${days}日！` : days === 0 ? '今日！🎉' : `${Math.abs(days)}日前`;
+        dateInfo = h('div', { class: 'ev-countdown' },
+          d ? h('span', { class: 'ev-countdown-date' }, fmtDate(d)) : null,
+          h('span', { class: 'ev-countdown-num' }, numTxt),
+        );
+      } else {
+        dateInfo = h('p', { class: 'ev-confirmed-line' }, '✅ 決行確定！');
+      }
     } else if (ev.kind === 'loose') {
       dateInfo = looseSlots.length
         ? h('p', { class: 'muted' }, looseSlots.join(' · '))

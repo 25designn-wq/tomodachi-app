@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <!-- 全体を揺らす -->
+  <g>
+    <animateTransform attributeName="transform" type="rotate"
+      values="-4 50 70;4 50 70;-4 50 70" dur="2s" repeatCount="indefinite" calcMode="spline"
+      keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+
+    <!-- 糸 -->
+    <line x1="50" y1="0" x2="50" y2="20" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- 胴体 -->
+    <ellipse cx="50" cy="97" rx="28" ry="21" fill="#f1f5f9"/>
+    <path d="M34 80 Q28 97 35 113" stroke="rgba(148,163,184,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M66 81 Q72 98 65 114" stroke="rgba(148,163,184,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+    <!-- 頭の影 -->
+    <circle cx="50" cy="54" r="26" fill="rgba(0,0,0,0.05)"/>
+    <!-- 頭 -->
+    <circle cx="50" cy="52" r="26" fill="white"/>
+
+    <!-- 首の結び目 -->
+    <ellipse cx="50" cy="78" rx="10" ry="4" fill="#cbd5e1"/>
+
+    <!-- 悲しい目（八の字気味） -->
+    <ellipse cx="41" cy="47" rx="4.5" ry="4" fill="#1e293b" transform="rotate(10 41 47)"/>
+    <ellipse cx="59" cy="47" rx="4.5" ry="4" fill="#1e293b" transform="rotate(-10 59 47)"/>
+    <!-- 目の輝き -->
+    <circle cx="43" cy="45" r="1.8" fill="white"/>
+    <circle cx="61" cy="45" r="1.8" fill="white"/>
+
+    <!-- 悲しい口（下向き） -->
+    <path d="M42 63 Q50 57 58 63" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- ほっぺ（薄め） -->
+    <ellipse cx="33" cy="56" rx="7" ry="4" fill="#fda4af" opacity="0.35"/>
+    <ellipse cx="67" cy="56" rx="7" ry="4" fill="#fda4af" opacity="0.35"/>
+
+    <!-- 涙（左目） -->
+    <ellipse cx="39" cy="52" rx="1.8" ry="2.8" fill="#60a5fa">
+      <animate attributeName="cy" from="52" to="78" dur="1s" repeatCount="indefinite" begin="0s" calcMode="ease-in"/>
+      <animate attributeName="opacity" values="1;1;0" dur="1s" repeatCount="indefinite" begin="0s"/>
+      <animate attributeName="ry" from="2.8" to="4.5" dur="1s" repeatCount="indefinite" begin="0s"/>
+    </ellipse>
+
+    <!-- 涙（右目） -->
+    <ellipse cx="61" cy="52" rx="1.8" ry="2.8" fill="#60a5fa">
+      <animate attributeName="cy" from="52" to="78" dur="1s" repeatCount="indefinite" begin="0.5s" calcMode="ease-in"/>
+      <animate attributeName="opacity" values="1;1;0" dur="1s" repeatCount="indefinite" begin="0.5s"/>
+      <animate attributeName="ry" from="2.8" to="4.5" dur="1s" repeatCount="indefinite" begin="0.5s"/>
+    </ellipse>
+  </g>
+</svg>
