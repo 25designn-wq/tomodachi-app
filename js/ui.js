@@ -160,9 +160,9 @@ export function enableSwipeNav(el, current) {
   }, { passive: false });
 
   const snapBack = () => {
-    el.style.transition = 'transform .2s ease-out';
+    // アニメーションなしで即リセット（引き戻し感をなくす）
+    el.style.transition = '';
     el.style.transform = '';
-    setTimeout(() => { el.style.transition = ''; }, 220);
   };
 
   el.addEventListener('touchend', (e) => {
@@ -170,17 +170,15 @@ export function enableSwipeNav(el, current) {
     tracking = false;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
-    const fast = Date.now() - t0 < 280 && Math.abs(dx) > 36; // 速いフリックも通す
+    const fast = Date.now() - t0 < 280 && Math.abs(dx) > 36;
     if ((!fast && (Math.abs(dx) < THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.6)) || Date.now() - t0 > 700) {
       snapBack(); return;
     }
     const next = SWIPE_ORDER[idx + (dx < 0 ? 1 : -1)];
     if (!next) { snapBack(); return; }
-    // 現在画面をスライドアウト
-    const dir = dx < 0 ? -1 : 1;
-    el.style.transition = 'transform .18s ease';
-    el.style.transform = `translateX(${dir * -100}vw)`;
-    setTimeout(() => navigate(next, {}, dx < 0 ? 'left' : 'right'), 160);
+    // 現在画面はドラッグ位置のまま、routerが両画面を同時スライドさせる
+    el.style.transition = 'none';
+    navigate(next, {}, dx < 0 ? 'left' : 'right');
   }, { passive: true });
 
   el.addEventListener('touchcancel', () => { if (tracking) { tracking = false; snapBack(); } }, { passive: true });
