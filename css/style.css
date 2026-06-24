@@ -223,10 +223,16 @@ a { color: inherit; }
   position: relative; display: flex; align-items: center; justify-content: center;
 }
 .teru-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 動画未読み込み中のプレースホルダー */
+.teru-placeholder {
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%; object-fit: contain;
+  background: #0f172a; padding: 22%;
+}
 
 /* 動画内オーバーレイ */
 .teru-overlay {
-  position: absolute; inset: 0; pointer-events: none; transition: opacity .4s;
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .4s;
 }
 /* 収縮アプローチリング */
 .teru-approach-ring {
@@ -246,16 +252,37 @@ a { color: inherit; }
   background: rgba(0,0,0,.28);
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 900; color: rgba(255,255,255,.85); letter-spacing: 1px;
-  transition: border-color .12s, background .12s, box-shadow .12s;
+  transition: border-color .12s, background .12s;
 }
 .teru-tap-zone.in-zone {
   border-color: #34d399;
   background: rgba(52,211,153,.3);
   animation: teru-ring .65s ease-in-out infinite;
 }
+.teru-tap-zone.pop {
+  animation: teru-tap-pop .22s ease-out forwards;
+}
 @keyframes teru-ring {
   0%,100% { box-shadow: 0 0 0 8px rgba(52,211,153,.18), 0 0 30px rgba(52,211,153,.5); }
   50%     { box-shadow: 0 0 0 14px rgba(52,211,153,.08), 0 0 50px rgba(52,211,153,.6); }
+}
+@keyframes teru-tap-pop {
+  0%   { transform: translate(-50%,-50%) scale(1); }
+  45%  { transform: translate(-50%,-50%) scale(1.18); }
+  100% { transform: translate(-50%,-50%) scale(1); }
+}
+/* 成功時のバーストリング */
+.teru-hit-burst {
+  position: absolute; left: 50%; top: 50%;
+  width: 88px; height: 88px; border-radius: 50%;
+  border: 4px solid #34d399;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  animation: teru-burst .42s ease-out forwards;
+}
+@keyframes teru-burst {
+  0%   { transform: translate(-50%,-50%) scale(1);   opacity: 1;  border-width: 4px; }
+  100% { transform: translate(-50%,-50%) scale(2.6); opacity: 0;  border-width: 1px; }
 }
 /* 旧ゲージ（未使用・互換のため残す） */
 .teru-ov-pin {
