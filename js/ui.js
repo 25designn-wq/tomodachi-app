@@ -129,19 +129,18 @@ export function collectMembers(items = [], events = [], me = '') {
 }
 
 // 主要3画面の横スワイプ移動（よてい ↔ ひろば ↔ お知らせ）。
-// 指にくっついて動き、離したら次の画面がスライドインする。
+// ドラッグ中は追随しない。ジェスチャー判定後に両画面を横並びでスライドさせる。
 const SWIPE_ORDER = ['events', 'home', 'activity'];
 export function enableSwipeNav(el, current) {
   const idx = SWIPE_ORDER.indexOf(current);
   if (idx < 0) return;
   let x0 = 0, y0 = 0, t0 = 0, tracking = false, moved = false;
-  const THRESHOLD = 72;
+  const THRESHOLD = 56;
 
   el.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1 || e.target.closest('.catbar, .chips, input, textarea')) { tracking = false; return; }
     const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
     tracking = true; moved = false;
-    el.style.transition = 'none';
   }, { passive: true });
 
   el.addEventListener('touchmove', (e) => {
@@ -150,38 +149,25 @@ export function enableSwipeNav(el, current) {
     const dx = t.clientX - x0, dy = t.clientY - y0;
     if (!moved) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      if (Math.abs(dy) > Math.abs(dx)) { tracking = false; el.style.transform = ''; return; } // 縦スクロール優先
+      if (Math.abs(dy) > Math.abs(dx)) { tracking = false; return; } // 縦スクロール優先
       moved = true;
     }
-    e.preventDefault(); // 横スワイプ確定したら縦スクロールを止める
-    // 端（最初/最後の画面）では抵抗を強くする
-    const atEdge = (dx > 0 && idx === 0) || (dx < 0 && idx === SWIPE_ORDER.length - 1);
-    el.style.transform = `translateX(${atEdge ? dx * 0.2 : dx}px)`;
+    e.preventDefault(); // 横ジェスチャー確定したら縦スクロールを止める
   }, { passive: false });
-
-  const snapBack = () => {
-    // アニメーションなしで即リセット（引き戻し感をなくす）
-    el.style.transition = '';
-    el.style.transform = '';
-  };
 
   el.addEventListener('touchend', (e) => {
     if (!tracking || !moved) { tracking = false; return; }
     tracking = false;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
-    const fast = Date.now() - t0 < 280 && Math.abs(dx) > 36;
-    if ((!fast && (Math.abs(dx) < THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.6)) || Date.now() - t0 > 700) {
-      snapBack(); return;
-    }
+    const fast = Date.now() - t0 < 300 && Math.abs(dx) > 36;
+    if (!fast && (Math.abs(dx) < THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.5)) return;
+    if (Date.now() - t0 > 700) return;
     const next = SWIPE_ORDER[idx + (dx < 0 ? 1 : -1)];
-    if (!next) { snapBack(); return; }
-    // 現在画面はドラッグ位置のまま、routerが両画面を同時スライドさせる
-    el.style.transition = 'none';
-    navigate(next, {}, dx < 0 ? 'left' : 'right');
+    if (next) navigate(next, {}, dx < 0 ? 'left' : 'right');
   }, { passive: true });
 
-  el.addEventListener('touchcancel', () => { if (tracking) { tracking = false; snapBack(); } }, { passive: true });
+  el.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
 }
 
 // 下部ナビ（よていが主役＝先頭）

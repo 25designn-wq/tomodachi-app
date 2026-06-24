@@ -17,33 +17,32 @@ export async function navigate(name, params = {}, dir = null) {
     }
 
     if (dir && prevEl && prevEl.parentNode === app) {
-      // 両画面を横並びで同時スライド
-      const inFrom = dir === 'left' ? '100vw' : '-100vw';
-      const outTo  = dir === 'left' ? '-100vw' : '100vw';
+      // 両画面をflexで横並びにしてコンテナごとスライド（重なりゼロ）
+      const goLeft = dir === 'left';
 
-      // 次画面を画面外に置いてappに追加（現在画面はそのまま）
-      el.style.transform = `translateX(${inFrom})`;
-      el.style.transition = 'none';
-      el.style.position = 'absolute';
-      el.style.inset = '0';
-      app.style.position = 'relative';
-      app.style.overflow = 'hidden';
-      app.appendChild(el);
+      prevEl.style.cssText = 'width:100vw;min-width:100vw;flex-shrink:0;overflow:hidden;';
+      el.style.cssText    = 'width:100vw;min-width:100vw;flex-shrink:0;overflow:hidden;';
 
-      // reflow を挟んで両方同時にアニメ開始
-      void el.offsetWidth;
-      const tr = 'transform .22s ease';
-      prevEl.style.transition = tr;
-      prevEl.style.transform = outTo;
-      el.style.transition = tr;
-      el.style.transform = '';
+      const wrap = document.createElement('div');
+      // goLeft: [prev][next]、右端(next)へスライド → translateX(-100vw)
+      // goRight:[next][prev]、左端(next)が見える位置へ初期translateX(-100vw)→0
+      wrap.style.cssText = `display:flex;width:200vw;will-change:transform;transform:${goLeft ? 'translateX(0)' : 'translateX(-100vw)'};`;
+      goLeft ? wrap.append(prevEl, el) : wrap.append(el, prevEl);
+
+      app.style.cssText = 'overflow:hidden;';
+      app.replaceChildren(wrap);
+
+      void wrap.offsetWidth; // reflow で初期位置を確定
+      wrap.style.transition = 'transform .25s ease';
+      wrap.style.transform = goLeft ? 'translateX(-100vw)' : 'translateX(0)';
 
       setTimeout(() => {
-        if (prevEl.parentNode === app) app.removeChild(prevEl);
+        prevEl.removeAttribute('style');
         el.removeAttribute('style');
         app.removeAttribute('style');
+        app.replaceChildren(el);
         window.scrollTo(0, 0);
-      }, 230);
+      }, 260);
     } else {
       app.replaceChildren(el);
       window.scrollTo(0, 0);
