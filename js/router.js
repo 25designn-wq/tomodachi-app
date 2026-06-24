@@ -6,8 +6,6 @@ let currentEl = null;
 
 export async function navigate(name, params = {}, dir = null) {
   const app = document.getElementById('app');
-  // 各画面のbottomNav()が必要に応じて表示する。ここでは一度隠す。
-  document.getElementById('bottomnav-host')?.setAttribute('hidden', '');
   const prevEl = currentEl;
   try {
     const mod = await import(`./screens/${name}.js`);
