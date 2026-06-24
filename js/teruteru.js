@@ -1,15 +1,14 @@
-// てるてる坊主ゲーム。ゲージを動画内にオーバーレイ表示。
+// てるてる坊主ゲーム。収縮するリングのタイミングゲーム。
 import { h } from './dom.js';
 
-const STEPS    = 7;
-const GAUGE_MS = 1400;
-const WIN_ZONE = 0.25;
+const STEPS       = 5;
+const APPROACH_MS = 1800; // リングが外→内まで縮む時間
 
 const raf2 = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
 
 export function openTeruteruFlow({ group, onComplete }) {
   let step = 0, finished = false, rafId = null;
-  let gaugePos = 0, direction = 1, lastT = null;
+  let approachT = 0, lastT = null;
 
   const scrim = h('div', { class: 'scrim' });
   document.body.append(scrim);
@@ -31,18 +30,17 @@ export function openTeruteruFlow({ group, onComplete }) {
     h('source', { src: 'teruteru_web.mp4',  type: 'video/mp4' }),
   );
   vid.setAttribute('webkit-playsinline', '');
+  // 最初のフレームを表示
+  vid.addEventListener('loadeddata', () => { if (vid.currentTime < 0.05) vid.currentTime = 0.05; }, { once: true });
 
-  // 動画内オーバーレイ（タップゾーン＋ゲージ）
-  const tapZone = h('div', { class: 'teru-tap-zone' }, '✦ TAP ✦');
-  const ovBar   = h('div', { class: 'teru-ov-bar' });
-  const ovPin   = h('div', { class: 'teru-ov-pin' });
-  const ovGauge = h('div', { class: 'teru-ov-gauge' }, ovBar, ovPin);
-  const ovMsg   = h('div', { class: 'teru-ov-msg' }, 'タップして始める');
-  const overlay = h('div', { class: 'teru-overlay' }, ovMsg, tapZone, ovGauge);
+  // 動画内オーバーレイ（タップゾーン + アプローチリング）
+  const tapZone  = h('div', { class: 'teru-tap-zone' },  '✦ TAP ✦');
+  const approachRing = h('div', { class: 'teru-approach-ring' });
+  const overlay  = h('div', { class: 'teru-overlay' }, approachRing, tapZone);
 
   const vwrap = h('div', { class: 'teru-vwrap' }, vid, overlay);
 
-  // ドット＆フィードバック（動画下）
+  // ドット＆フィードバック
   const dotsEl = h('div', { class: 'teru-dots' });
   const feedEl = h('div', { class: 'teru-feed' });
 
@@ -60,19 +58,22 @@ export function openTeruteruFlow({ group, onComplete }) {
     feedEl.classList.add('show');
   };
 
-  const updateGauge = (ts) => {
+  const updateApproach = (ts) => {
     if (!lastT) lastT = ts;
-    const dt = (ts - lastT) / GAUGE_MS;
-    lastT = ts;
-    gaugePos += direction * dt * 2;
-    if (gaugePos >= 1) { gaugePos = 1; direction = -1; }
-    if (gaugePos <= 0) { gaugePos = 0; direction =  1; }
-    ovPin.style.left = `${gaugePos * 100}%`;
-    const inZone = Math.abs(gaugePos - 0.5) < WIN_ZONE;
+    const dt = ts - lastT; lastT = ts;
+
+    approachT += dt / APPROACH_MS;
+    if (approachT >= 1) approachT = 0;
+
+    // scale: 3.0 → 1.0 としてアプローチリングを縮める
+    const scale = 3.0 - 2.0 * approachT;
+    const inZone = approachT >= 0.62; // 残り38%≒684msがグッドゾーン
+
+    approachRing.style.transform = `translate(-50%,-50%) scale(${scale.toFixed(3)})`;
+    approachRing.classList.toggle('in-zone', inZone);
     tapZone.classList.toggle('in-zone', inZone);
-    ovPin.classList.toggle('in-zone', inZone);
-    ovBar.style.opacity = inZone ? '1' : '0.3';
-    rafId = requestAnimationFrame(updateGauge);
+
+    rafId = requestAnimationFrame(updateApproach);
   };
 
   const showVideoStep = (s) => {
@@ -97,19 +98,19 @@ export function openTeruteruFlow({ group, onComplete }) {
     e.stopPropagation();
     if (finished) return;
     if (!running) {
-      running = true;
-      ovMsg.textContent = '今だ！ とタップ！';
-      lastT = null; rafId = requestAnimationFrame(updateGauge);
+      running = true; lastT = null;
+      approachT = 0;
+      rafId = requestAnimationFrame(updateApproach);
       return;
     }
-    const inZone = Math.abs(gaugePos - 0.5) < WIN_ZONE;
+    const inZone = approachT >= 0.62;
     if (inZone) {
       step++; drawDots(); showVideoStep(step);
       pop(step === STEPS ? '🌤 PERFECT！' : '✨ GOOD!', 'ok');
       if (step >= STEPS) setTimeout(complete, 750);
     } else {
       pop('💧 もう少し！', 'miss');
-      direction = 1; gaugePos = 0; lastT = null;
+      approachT = 0; lastT = null;
     }
   };
 

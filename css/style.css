@@ -197,12 +197,12 @@ a { color: inherit; }
 /* オーバーレイカード */
 .teru-wrap {
   position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  display: flex; align-items: center; justify-content: center; padding: 12px;
 }
 .teru-card {
-  background: #fff; border-radius: 24px; padding: 18px 18px 22px;
-  width: 100%; max-width: 340px;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  background: #fff; border-radius: 24px; padding: 14px 14px 18px;
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,.3);
   cursor: pointer; user-select: none; -webkit-user-select: none;
   opacity: 0; transform: scale(.94) translateY(10px);
@@ -219,24 +219,29 @@ a { color: inherit; }
 }
 .teru-vwrap {
   width: 100%; border-radius: 14px; overflow: hidden;
-  background: #1e293b; aspect-ratio: 9/16; max-height: 38vh;
+  background: #1e293b; aspect-ratio: 9/16; max-height: 55vh;
   position: relative; display: flex; align-items: center; justify-content: center;
 }
 .teru-video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* 動画内オーバーレイ */
 .teru-overlay {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; pointer-events: none; transition: opacity .4s;
+  position: absolute; inset: 0; pointer-events: none; transition: opacity .4s;
 }
-.teru-ov-msg {
-  background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
-  color: #fff; font-size: 12px; font-weight: 800;
-  padding: 4px 13px; border-radius: 999px; letter-spacing: .3px;
-}
-.teru-tap-zone {
+/* 収縮アプローチリング */
+.teru-approach-ring {
+  position: absolute; left: 50%; top: 50%;
   width: 88px; height: 88px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.7);
+  transform: translate(-50%,-50%) scale(3);
+  transition: border-color .1s;
+}
+.teru-approach-ring.in-zone { border-color: #34d399; }
+/* タップゾーン（中心の固定円） */
+.teru-tap-zone {
+  position: absolute; left: 50%; top: 50%;
+  width: 88px; height: 88px; border-radius: 50%;
+  transform: translate(-50%,-50%);
   border: 3px solid rgba(255,255,255,.4);
   background: rgba(0,0,0,.28);
   display: flex; align-items: center; justify-content: center;
@@ -246,33 +251,17 @@ a { color: inherit; }
 .teru-tap-zone.in-zone {
   border-color: #34d399;
   background: rgba(52,211,153,.3);
-  box-shadow: 0 0 0 10px rgba(52,211,153,.18), 0 0 40px rgba(52,211,153,.5);
   animation: teru-ring .65s ease-in-out infinite;
 }
 @keyframes teru-ring {
-  0%,100% { box-shadow: 0 0 0 10px rgba(52,211,153,.18), 0 0 40px rgba(52,211,153,.5); }
-  50%     { box-shadow: 0 0 0 18px rgba(52,211,153,.08), 0 0 60px rgba(52,211,153,.6); }
+  0%,100% { box-shadow: 0 0 0 8px rgba(52,211,153,.18), 0 0 30px rgba(52,211,153,.5); }
+  50%     { box-shadow: 0 0 0 14px rgba(52,211,153,.08), 0 0 50px rgba(52,211,153,.6); }
 }
-/* ゲージ（動画の底部） */
-.teru-ov-gauge {
-  position: absolute; bottom: 14px; left: 18px; right: 18px;
-  height: 7px; background: rgba(255,255,255,.18); border-radius: 4px;
-}
-.teru-ov-gauge::before {
-  content: ''; position: absolute;
-  left: 25%; width: 50%; top: 0; bottom: 0; border-radius: 4px;
-  background: rgba(52,211,153,.45);
-}
-.teru-ov-bar {
-  position: absolute; inset: 0; border-radius: 4px;
-  background: linear-gradient(90deg, #38bdf8, #34d399);
-  transition: opacity .1s;
-}
+/* 旧ゲージ（未使用・互換のため残す） */
 .teru-ov-pin {
   position: absolute; top: 50%; transform: translate(-50%,-50%);
   width: 13px; height: 13px; border-radius: 50%;
   background: #fff; border: 2.5px solid #64748b;
-  box-shadow: 0 1px 4px rgba(0,0,0,.3);
   transition: border-color .1s, box-shadow .1s;
 }
 .teru-ov-pin.in-zone { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.3); }
