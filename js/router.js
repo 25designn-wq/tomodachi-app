@@ -14,13 +14,13 @@ export async function navigate(name, params = {}, dir = null) {
     }
     if (dir) {
       // スワイプ由来: 次画面を画面外に置いてからスライドイン
-      el.style.transform = `translateX(${dir === 'left' ? '110vw' : '-110vw'})`;
+      el.style.transform = `translateX(${dir === 'left' ? '100vw' : '-100vw'})`;
       el.style.transition = 'none';
       app.replaceChildren(el);
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        el.style.transition = 'transform .26s cubic-bezier(0,0,.2,1)';
+        el.style.transition = 'transform .18s ease';
         el.style.transform = '';
-        setTimeout(() => { el.style.transition = ''; }, 280);
+        setTimeout(() => { el.style.transition = ''; }, 200);
       }));
     } else {
       app.replaceChildren(el);

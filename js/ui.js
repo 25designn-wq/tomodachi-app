@@ -160,9 +160,9 @@ export function enableSwipeNav(el, current) {
   }, { passive: false });
 
   const snapBack = () => {
-    el.style.transition = 'transform .28s cubic-bezier(.4,0,.2,1)';
+    el.style.transition = 'transform .2s ease-out';
     el.style.transform = '';
-    setTimeout(() => { el.style.transition = ''; el.style.transform = ''; }, 300);
+    setTimeout(() => { el.style.transition = ''; }, 220);
   };
 
   el.addEventListener('touchend', (e) => {
@@ -178,9 +178,9 @@ export function enableSwipeNav(el, current) {
     if (!next) { snapBack(); return; }
     // 現在画面をスライドアウト
     const dir = dx < 0 ? -1 : 1;
-    el.style.transition = 'transform .22s cubic-bezier(.4,0,1,1)';
-    el.style.transform = `translateX(${dir * -110}vw)`;
-    setTimeout(() => navigate(next, {}, dx < 0 ? 'left' : 'right'), 200);
+    el.style.transition = 'transform .18s ease';
+    el.style.transform = `translateX(${dir * -100}vw)`;
+    setTimeout(() => navigate(next, {}, dx < 0 ? 'left' : 'right'), 160);
   }, { passive: true });
 
   el.addEventListener('touchcancel', () => { if (tracking) { tracking = false; snapBack(); } }, { passive: true });
