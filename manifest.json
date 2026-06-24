@@ -1,7 +1,7 @@
 {
-  "name": "おじ部",
-  "short_name": "おじ部",
-  "description": "おじさん仲間で、気になるもの・行きたい所・観たい映画・遊びの予定を共有",
+  "name": "あそ部活",
+  "short_name": "あそ部活",
+  "description": "仲間と「気になるもの・行きたい所・観たい映画・遊びの予定」をゆるく共有",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

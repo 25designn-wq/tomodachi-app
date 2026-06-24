@@ -83,7 +83,7 @@ export function playBarrage(entries) {
   const body = h('div', { class: 'recv-body' }, h('div', { class: 'recv-lead' }, '📣 みんなの「俺も！」が届いてます…'));
   const banner = h('div', { class: 'recv-banner' });
   screen.append(
-    h('div', { class: 'recv-top' }, h('div', { class: 'recv-brand' }, '🍻 おじ部'), h('button', { class: 'recv-x', onclick: close }, '×')),
+    h('div', { class: 'recv-top' }, h('div', { class: 'recv-brand' }, '🍻 あそ部活'), h('button', { class: 'recv-x', onclick: close }, '×')),
     body, banner,
   );
   document.body.append(screen);

@@ -70,7 +70,7 @@ export default async function events() {
 
   const el = h('div', { class: 'screen events' },
     h('header', { class: 'appbar' },
-      h('div', { class: 'brand' }, h('span', { class: 'brand-ico' }, '🍻'), h('span', {}, 'おじ部')),
+      h('div', { class: 'brand' }, h('span', { class: 'brand-ico' }, '🍻'), h('span', {}, 'あそ部活')),
       h('button', { class: 'me-chip', onclick: () => navigate('settings') }, me, ' ⚙'),
     ),
     h('div', { class: 'scroll' }, listEl),

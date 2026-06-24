@@ -20,7 +20,7 @@ export default function setup() {
   return h('div', { class: 'screen setup' },
     h('div', { class: 'setup-hero' },
       h('div', { class: 'logo-badge' }, '🍻'),
-      h('h1', {}, 'おじ部'),
+      h('h1', {}, 'あそ部活'),
       h('p', { class: 'lead' }, '気になるもの・行きたい所・観たい映画・遊びの予定を、仲間とゆるく共有。'),
     ),
     h('div', { class: 'card form' },
