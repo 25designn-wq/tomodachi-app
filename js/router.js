@@ -1,9 +1,10 @@
 // 画面遷移。screens/<name>.js を動的importして #app に差し替える。
 // 各画面は default export で render(params) → 要素 を返す。
 // 要素に el.__cleanup があれば、離れる時に呼ぶ（Firestore購読解除など）。
+// dir='left'|'right' を渡すとスワイプ由来のスライドインアニメーションが付く。
 let currentEl = null;
 
-export async function navigate(name, params = {}) {
+export async function navigate(name, params = {}, dir = null) {
   const app = document.getElementById('app');
   try {
     const mod = await import(`./screens/${name}.js`);
@@ -11,7 +12,19 @@ export async function navigate(name, params = {}) {
     if (currentEl && typeof currentEl.__cleanup === 'function') {
       try { currentEl.__cleanup(); } catch (e) { console.warn(e); }
     }
-    app.replaceChildren(el);
+    if (dir) {
+      // スワイプ由来: 次画面を画面外に置いてからスライドイン
+      el.style.transform = `translateX(${dir === 'left' ? '110vw' : '-110vw'})`;
+      el.style.transition = 'none';
+      app.replaceChildren(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition = 'transform .26s cubic-bezier(0,0,.2,1)';
+        el.style.transform = '';
+        setTimeout(() => { el.style.transition = ''; }, 280);
+      }));
+    } else {
+      app.replaceChildren(el);
+    }
     currentEl = el;
     window.scrollTo(0, 0);
   } catch (e) {

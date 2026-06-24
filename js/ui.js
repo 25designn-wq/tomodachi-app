@@ -129,26 +129,61 @@ export function collectMembers(items = [], events = [], me = '') {
 }
 
 // 主要3画面の横スワイプ移動（よてい ↔ ひろば ↔ お知らせ）。
-// 横スクロールするUI（カテゴリバー等）や入力欄の上では無効。
+// 指にくっついて動き、離したら次の画面がスライドインする。
 const SWIPE_ORDER = ['events', 'home', 'activity'];
 export function enableSwipeNav(el, current) {
   const idx = SWIPE_ORDER.indexOf(current);
   if (idx < 0) return;
-  let x0 = 0, y0 = 0, t0 = 0, tracking = false;
+  let x0 = 0, y0 = 0, t0 = 0, tracking = false, moved = false;
+  const THRESHOLD = 72;
+
   el.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1 || e.target.closest('.catbar, .chips, input, textarea')) { tracking = false; return; }
-    const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); tracking = true;
+    const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
+    tracking = true; moved = false;
+    el.style.transition = 'none';
   }, { passive: true });
-  el.addEventListener('touchend', (e) => {
+
+  el.addEventListener('touchmove', (e) => {
     if (!tracking) return;
+    const t = e.touches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    if (!moved) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if (Math.abs(dy) > Math.abs(dx)) { tracking = false; el.style.transform = ''; return; } // 縦スクロール優先
+      moved = true;
+    }
+    e.preventDefault(); // 横スワイプ確定したら縦スクロールを止める
+    // 端（最初/最後の画面）では抵抗を強くする
+    const atEdge = (dx > 0 && idx === 0) || (dx < 0 && idx === SWIPE_ORDER.length - 1);
+    el.style.transform = `translateX(${atEdge ? dx * 0.2 : dx}px)`;
+  }, { passive: false });
+
+  const snapBack = () => {
+    el.style.transition = 'transform .28s cubic-bezier(.4,0,.2,1)';
+    el.style.transform = '';
+    setTimeout(() => { el.style.transition = ''; el.style.transform = ''; }, 300);
+  };
+
+  el.addEventListener('touchend', (e) => {
+    if (!tracking || !moved) { tracking = false; return; }
     tracking = false;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
-    if (Date.now() - t0 > 600) return;            // ゆっくりすぎる動きは無視
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.8) return; // 横方向がはっきりしている時だけ
-    const next = SWIPE_ORDER[idx + (dx < 0 ? 1 : -1)]; // 左スワイプ→次の画面
-    if (next) navigate(next);
+    const fast = Date.now() - t0 < 280 && Math.abs(dx) > 36; // 速いフリックも通す
+    if ((!fast && (Math.abs(dx) < THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.6)) || Date.now() - t0 > 700) {
+      snapBack(); return;
+    }
+    const next = SWIPE_ORDER[idx + (dx < 0 ? 1 : -1)];
+    if (!next) { snapBack(); return; }
+    // 現在画面をスライドアウト
+    const dir = dx < 0 ? -1 : 1;
+    el.style.transition = 'transform .22s cubic-bezier(.4,0,1,1)';
+    el.style.transform = `translateX(${dir * -110}vw)`;
+    setTimeout(() => navigate(next, {}, dx < 0 ? 'left' : 'right'), 200);
   }, { passive: true });
+
+  el.addEventListener('touchcancel', () => { if (tracking) { tracking = false; snapBack(); } }, { passive: true });
 }
 
 // 下部ナビ（よていが主役＝先頭）
