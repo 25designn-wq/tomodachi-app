@@ -37,7 +37,7 @@ a { color: inherit; }
   flex: 1;
   padding: 12px 14px calc(var(--bar-h) + 90px + var(--safe-b));
 }
-.scroll.pad { padding: 16px 16px 40px; }
+.scroll.pad { padding: 16px 16px calc(var(--bar-h) + 60px + var(--safe-b)); }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
 
@@ -969,6 +969,27 @@ hr { border: none; border-top: 1px solid var(--line); margin: 22px 0; }
   background: var(--accent);
   animation: pop-in .25s ease both;
 }
+
+/* ---- 削除 Undo トースト ---- */
+.undo-toast {
+  position: fixed; left: 50%;
+  bottom: calc(var(--bar-h) + var(--safe-b) + 14px);
+  transform: translate(-50%, 10px); z-index: 62;
+  background: rgba(20,26,38,.93); color: #fff; font-size: 13px;
+  padding: 10px 14px 10px 16px; border-radius: 12px;
+  display: flex; align-items: center; gap: 12px;
+  opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: auto; white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+.undo-toast.is-open { opacity: 1; transform: translate(-50%, 0); }
+.undo-toast-msg { font-weight: 600; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.undo-toast-btn {
+  border: none; background: var(--accent); color: #fff;
+  border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 800;
+  cursor: pointer; font-family: inherit; flex-shrink: 0;
+}
+.undo-toast-btn:active { opacity: .8; }
 
 /* ---- やりたいこと：コメント ---- */
 .idea-item { margin-bottom: 8px; }

@@ -29,6 +29,8 @@ export default async function eventdetail(params = {}) {
   let goConfirmOpen = false;
   let unconfirmOpen = false;
   let openCommentIdx = null; // コメント展開中の idea インデックス
+  let pendingDelete = null;  // { idx, timer } — 削除保留中
+  let undoToastEl = null;
   const body = h('div', { class: 'scroll pad' });
 
   const flash = (msg) => {
@@ -125,8 +127,9 @@ export default async function eventdetail(params = {}) {
       );
     })() : null;
 
-    // やりたいこと行（コメント付き）
+    // やりたいこと行（コメント付き・削除保留中は非表示）
     const ideaRows = ideas.map((idea, i) => {
+      if (pendingDelete && pendingDelete.idx === i) return null;
       const m = catMeta(idea.category);
       const comments = idea.comments || [];
       const isOpen = openCommentIdx === i;
@@ -257,10 +260,50 @@ export default async function eventdetail(params = {}) {
     markSeen();
   };
 
-  const removeIdea = (i) => {
-    const ideas = [...(ev.ideas || [])]; ideas.splice(i, 1);
+  const showUndoToast = (text) => {
+    hideUndoToast();
+    undoToastEl = h('div', { class: 'undo-toast' },
+      h('span', { class: 'undo-toast-msg' }, `「${text}」を削除`),
+      h('button', { class: 'undo-toast-btn', onclick: undoDelete }, '元に戻す'),
+    );
+    document.body.appendChild(undoToastEl);
+    requestAnimationFrame(() => requestAnimationFrame(() => undoToastEl?.classList.add('is-open')));
+    setTimeout(hideUndoToast, 5500);
+  };
+
+  const hideUndoToast = () => {
+    if (!undoToastEl) return;
+    undoToastEl.classList.remove('is-open');
+    const el = undoToastEl; undoToastEl = null;
+    setTimeout(() => el.remove(), 220);
+  };
+
+  const commitDelete = () => {
+    if (!pendingDelete) return;
+    clearTimeout(pendingDelete.timer);
+    const { idx } = pendingDelete;
+    pendingDelete = null;
+    const ideas = [...(ev.ideas || [])];
+    if (idx < ideas.length) ideas.splice(idx, 1);
     store.events.update(group, id, { ideas, updatedAt: Date.now() });
     markSeen();
+  };
+
+  const undoDelete = () => {
+    if (!pendingDelete) return;
+    clearTimeout(pendingDelete.timer);
+    pendingDelete = null;
+    hideUndoToast();
+    render();
+  };
+
+  const removeIdea = (i) => {
+    const idea = (ev.ideas || [])[i];
+    if (!idea) return;
+    if (pendingDelete) commitDelete(); // 保留中があれば先にコミット
+    pendingDelete = { idx: i, timer: setTimeout(commitDelete, 5000) };
+    render();
+    showUndoToast(idea.text || 'やりたいこと');
   };
 
   const addIdeaFromItem = (it) => {
@@ -289,7 +332,7 @@ export default async function eventdetail(params = {}) {
     topbar('予定の調整', () => navigate('events')),
     body,
   );
-  el.__cleanup = () => { unsubE(); unsubI(); };
+  el.__cleanup = () => { unsubE(); unsubI(); if (pendingDelete) commitDelete(); hideUndoToast(); };
   render();
   return el;
 }
