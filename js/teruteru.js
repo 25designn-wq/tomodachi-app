@@ -31,10 +31,10 @@ export function openTeruteruFlow({ group, onComplete }) {
   );
   vid.setAttribute('webkit-playsinline', '');
 
-  // プレースホルダー（動画の最初のフレームが出るまでの間、アイコンで埋める）
+  // プレースホルダー（動画の最初のフレームが出るまでアイコンで埋める）
   const placeholder = h('img', { src: 'icons/teruteru.svg', class: 'teru-placeholder', alt: '' });
   vid.addEventListener('loadeddata', () => {
-    vid.currentTime = 0.05; // 最初のフレームを描画させる
+    vid.currentTime = 0.05;
     placeholder.style.transition = 'opacity .4s';
     placeholder.style.opacity = '0';
     setTimeout(() => placeholder.remove(), 450);
@@ -45,6 +45,7 @@ export function openTeruteruFlow({ group, onComplete }) {
   const approachRing = h('div', { class: 'teru-approach-ring' });
   const overlay     = h('div', { class: 'teru-overlay' }, approachRing, tapZone);
 
+  // vwrap は complete() 内でも参照
   const vwrap = h('div', { class: 'teru-vwrap' }, vid, placeholder, overlay);
 
   // ドット＆フィードバック
@@ -65,17 +66,17 @@ export function openTeruteruFlow({ group, onComplete }) {
     feedEl.classList.add('show');
   };
 
-  // 成功時のバーストリング（外側に広がって消える）
+  // 成功時のバーストリング
   const spawnBurst = () => {
     const b = h('div', { class: 'teru-hit-burst' });
     overlay.appendChild(b);
     b.addEventListener('animationend', () => b.remove(), { once: true });
   };
 
-  // タップゾーンの一時的なポップアニメーション
+  // タップゾーンのポップアニメーション
   const popTapZone = () => {
     tapZone.classList.remove('pop');
-    void tapZone.offsetWidth; // reflow
+    void tapZone.offsetWidth;
     tapZone.classList.add('pop');
     tapZone.addEventListener('animationend', () => tapZone.classList.remove('pop'), { once: true });
   };
@@ -87,8 +88,8 @@ export function openTeruteruFlow({ group, onComplete }) {
     approachT += dt / APPROACH_MS;
     if (approachT >= 1) approachT = 0;
 
-    const scale  = 3.0 - 2.0 * approachT; // 3.0 → 1.0
-    const inZone = approachT >= 0.62;       // 残り38%≒684ms
+    const scale  = 3.0 - 2.0 * approachT;
+    const inZone = approachT >= 0.62;
 
     approachRing.style.transform = `translate(-50%,-50%) scale(${scale.toFixed(3)})`;
     approachRing.classList.toggle('in-zone', inZone);
@@ -104,15 +105,22 @@ export function openTeruteruFlow({ group, onComplete }) {
   };
 
   const complete = () => {
-    finished = true; cancelAnimationFrame(rafId);
-    overlay.style.transition = 'opacity .4s';
-    overlay.style.opacity = '0';
-    if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // 完成の振動
+    finished = true;
+    // 完成フラッシュ「びかーーん！」
+    const flash = h('div', { class: 'teru-complete-flash' },
+      h('img', { src: 'icons/teruteru.svg', class: 'teru-complete-icon', alt: '' }),
+      h('div', { class: 'teru-complete-text' }, '完成！'),
+      h('div', { class: 'teru-complete-sub' }, '晴れますように ☀️'),
+    );
+    vwrap.appendChild(flash);
+
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+
     const countKey = `ojisan_${group}_teruteru`;
     const n = parseInt(localStorage.getItem(countKey) || '0') + 1;
     localStorage.setItem(countKey, String(n));
     onComplete?.(n);
-    setTimeout(() => doClose(), 2400);
+    setTimeout(() => doClose(), 2800);
   };
 
   let running = false;
@@ -121,7 +129,6 @@ export function openTeruteruFlow({ group, onComplete }) {
     if (finished) return;
     if (!running) {
       running = true; lastT = null; approachT = 0;
-      // 初回タップ時に動画の最初のフレームを表示しようと試みる
       vid.play().then(() => setTimeout(() => vid.pause(), 100)).catch(() => {});
       rafId = requestAnimationFrame(updateApproach);
       return;
@@ -129,11 +136,19 @@ export function openTeruteruFlow({ group, onComplete }) {
     const inZone = approachT >= 0.62;
     if (inZone) {
       step++; drawDots(); showVideoStep(step);
-      pop(step === STEPS ? '🌤 PERFECT！' : '✨ GOOD!', 'ok');
-      spawnBurst();
-      popTapZone();
+      spawnBurst(); popTapZone();
       if (navigator.vibrate) navigator.vibrate(50);
-      if (step >= STEPS) setTimeout(complete, 750);
+
+      if (step >= STEPS) {
+        // 最終タップ：リングをすぐ止めてから完成フラッシュへ
+        cancelAnimationFrame(rafId);
+        approachRing.style.display = 'none';
+        tapZone.style.display = 'none';
+        pop('🌤 PERFECT！', 'ok');
+        setTimeout(complete, 480); // バーストが消えてから完成フラッシュ
+      } else {
+        pop('✨ GOOD!', 'ok');
+      }
     } else {
       pop('💧 もう少し！', 'miss');
       if (navigator.vibrate) navigator.vibrate(20);

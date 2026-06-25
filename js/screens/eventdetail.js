@@ -22,6 +22,7 @@ export default async function eventdetail(params = {}) {
   let ideaInputOpen = false;
   let deleteConfirmOpen = false;
   let goConfirmOpen = false;
+  let unconfirmOpen = false;
   const body = h('div', { class: 'scroll pad' });
 
   const flash = (msg) => {
@@ -132,7 +133,23 @@ export default async function eventdetail(params = {}) {
 
     let goSection = null;
     if (ev.confirmed) {
-      goSection = h('div', { class: 'ev-confirmed-banner' }, '🎉 この予定は決行確定！');
+      // 作成者のみ「確定を取り消す」ボタンを表示
+      goSection = isCreator ? (
+        unconfirmOpen
+          ? h('div', { class: 'inline-confirm' },
+              h('p', {}, '確定を取り消して候補日選択に戻す？'),
+              h('div', { class: 'inline-confirm-btns' },
+                h('button', { class: 'btn-sub', onclick: () => { unconfirmOpen = false; render(); } }, 'やめる'),
+                h('button', { class: 'btn-sub', onclick: () => {
+                  store.events.update(group, id, { confirmed: false });
+                  unconfirmOpen = false;
+                } }, '取り消す'),
+              ),
+            )
+          : h('button', { class: 'btn-sub', style: { marginTop: '4px' },
+              onclick: () => { unconfirmOpen = true; render(); }
+            }, '確定を取り消す（候補に戻す）')
+      ) : null;
     } else if (canConfirm) {
       goSection = goConfirmOpen
         ? h('div', { class: 'inline-confirm' },

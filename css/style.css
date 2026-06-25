@@ -284,6 +284,35 @@ a { color: inherit; }
   0%   { transform: translate(-50%,-50%) scale(1);   opacity: 1;  border-width: 4px; }
   100% { transform: translate(-50%,-50%) scale(2.6); opacity: 0;  border-width: 1px; }
 }
+
+/* 完成フラッシュ「びかーーん！」 */
+.teru-complete-flash {
+  position: absolute; inset: 0; z-index: 5; border-radius: 14px;
+  background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 45%, #e0f2fe 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  animation: teru-flash-in .34s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.teru-complete-icon {
+  width: 68px; height: 68px; object-fit: contain;
+  animation: teru-bounce-in .42s cubic-bezier(0.34,1.56,0.64,1) .14s both;
+}
+.teru-complete-text {
+  font-size: 52px; font-weight: 900; color: #059669; line-height: 1.1;
+  animation: teru-bounce-in .42s cubic-bezier(0.34,1.56,0.64,1) .24s both;
+}
+.teru-complete-sub {
+  font-size: 14px; font-weight: 800; color: #065f46;
+  animation: teru-bounce-in .38s cubic-bezier(0.34,1.56,0.64,1) .36s both;
+}
+@keyframes teru-flash-in {
+  0%   { transform: scale(0) rotate(-6deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg);  opacity: 1; }
+}
+@keyframes teru-bounce-in {
+  0%   { transform: scale(0.2) translateY(20px); opacity: 0; }
+  100% { transform: scale(1)   translateY(0);    opacity: 1; }
+}
 /* 旧ゲージ（未使用・互換のため残す） */
 .teru-ov-pin {
   position: absolute; top: 50%; transform: translate(-50%,-50%);
