@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#bfdbfe"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Sun -->
+  <circle cx="400" cy="95" r="42" fill="#fde68a" opacity="0.9"/>
+  <!-- Sun rays -->
+  <g stroke="#fde68a" stroke-width="5" stroke-linecap="round" opacity="0.7">
+    <line x1="400" y1="38" x2="400" y2="22"/>
+    <line x1="400" y1="152" x2="400" y2="168"/>
+    <line x1="343" y1="95" x2="327" y2="95"/>
+    <line x1="457" y1="95" x2="473" y2="95"/>
+    <line x1="360" y1="55" x2="348" y2="43"/>
+    <line x1="440" y1="55" x2="452" y2="43"/>
+    <line x1="360" y1="135" x2="348" y2="147"/>
+    <line x1="440" y1="135" x2="452" y2="147"/>
+  </g>
+
+  <!-- Cloud (decorative) -->
+  <ellipse cx="115" cy="108" rx="38" ry="22" fill="white" opacity="0.75"/>
+  <ellipse cx="145" cy="98" rx="30" ry="18" fill="white" opacity="0.75"/>
+  <ellipse cx="170" cy="108" rx="28" ry="17" fill="white" opacity="0.75"/>
+
+  <!-- Teru-teru bozu (centered, scaled up ~3.2x from 100x120 into safe zone) -->
+  <g transform="translate(142, 148) scale(2.28)">
+    <!-- String -->
+    <line x1="50" y1="0" x2="50" y2="20" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Body -->
+    <ellipse cx="50" cy="97" rx="28" ry="21" fill="#f1f5f9"/>
+    <path d="M34 80 Q28 97 35 113" stroke="rgba(148,163,184,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M66 81 Q72 98 65 114" stroke="rgba(148,163,184,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+    <!-- Head shadow -->
+    <circle cx="50" cy="54" r="26" fill="rgba(0,0,0,0.05)"/>
+    <!-- Head -->
+    <circle cx="50" cy="52" r="26" fill="white"/>
+
+    <!-- Neck knot -->
+    <ellipse cx="50" cy="78" rx="10" ry="4" fill="#cbd5e1"/>
+
+    <!-- Eyes -->
+    <circle cx="41" cy="48" r="4.5" fill="#1e293b"/>
+    <circle cx="59" cy="48" r="4.5" fill="#1e293b"/>
+    <!-- Eye shine -->
+    <circle cx="43" cy="45.5" r="1.8" fill="white"/>
+    <circle cx="61" cy="45.5" r="1.8" fill="white"/>
+
+    <!-- Smile -->
+    <path d="M41 61 Q50 70 59 61" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Blush -->
+    <ellipse cx="33" cy="56" rx="7" ry="4" fill="#fda4af" opacity="0.5"/>
+    <ellipse cx="67" cy="56" rx="7" ry="4" fill="#fda4af" opacity="0.5"/>
+  </g>
+</svg>
