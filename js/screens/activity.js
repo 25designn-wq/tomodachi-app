@@ -43,6 +43,8 @@ export default async function activity(params = {}) {
       }
     });
 
+    const participates = (ev) => ev.createdBy === me || me in (ev.votes || {});
+
     events.forEach(ev => {
       // 日程への投票
       if (Object.keys(ev.votes || {}).length > 0) {
@@ -52,6 +54,14 @@ export default async function activity(params = {}) {
       (ev.ideas || []).filter(idea => idea.itemId || idea.text).forEach(idea => {
         acts.push({ type: 'idea', event: ev, idea, at: ev.createdAt - 2 });
       });
+      // やりたいことへのコメント（自分が参加している予定のみ）
+      if (participates(ev)) {
+        (ev.ideas || []).forEach(idea => {
+          (idea.comments || []).forEach(c => {
+            acts.push({ type: 'ideaComment', event: ev, idea, comment: c, at: c.at });
+          });
+        });
+      }
     });
 
     return acts.sort((a, b) => (b.at || 0) - (a.at || 0));
@@ -77,6 +87,7 @@ export default async function activity(params = {}) {
         case 'react': return reactCard(act);
         case 'vote': return voteCard(act);
         case 'idea': return ideaCard(act);
+        case 'ideaComment': return ideaCommentCard(act);
       }
     } catch (e) { console.warn(e); return null; }
   };
@@ -221,6 +232,27 @@ export default async function activity(params = {}) {
       h('div', { class: 'act-idea-line' },
         m ? h('span', { class: 'act-cat sm', style: { background: m.color } }, m.icon) : null,
         ` 「${idea.text || ''}」がネタに追加された`,
+      ),
+      h('button', { class: 'act-btn', onclick: () => navigate('eventdetail', { id: ev.id }) }, '予定を見る'),
+    );
+  };
+
+  // ── やりたいことへのコメントカード ──
+  const ideaCommentCard = ({ event: ev, idea, comment: c }) => {
+    const isMyEvent = ev.createdBy === me;
+    return h('div', { class: 'act-card' + (isMyEvent ? ' mine' : '') },
+      h('div', { class: 'act-meta' },
+        catTag(null, { color: '#6366f1', label: '🗓 よてい' }),
+        agoEl(c.at),
+      ),
+      h('div', { class: 'act-title' }, ev.title || ''),
+      h('div', { class: 'act-idea-line' }, `💡 「${idea.text || ''}」へのコメント`),
+      h('div', { class: 'act-review-row' },
+        av(c.by),
+        h('div', { class: 'act-review-body' },
+          h('div', { class: 'act-who' }, c.by),
+          h('div', { class: 'act-msg' }, c.text),
+        ),
       ),
       h('button', { class: 'act-btn', onclick: () => navigate('eventdetail', { id: ev.id }) }, '予定を見る'),
     );

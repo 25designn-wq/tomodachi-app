@@ -106,6 +106,7 @@ export function openEventFlow({ store, group, me, prefill = null }) {
         looseSlots: [...looseSlots],
         votes: {}, ideas: [],
         createdBy: me,
+        updatedAt: Date.now(),
       });
       burst();
       closeAll();

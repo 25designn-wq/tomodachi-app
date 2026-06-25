@@ -42,6 +42,7 @@ export default async function addevent(params = {}) {
       dates: [...dates], votes: {},
       ideas: params.idea ? [params.idea] : [],
       createdBy: me,
+      updatedAt: Date.now(),
     });
     navigate('events');
   };

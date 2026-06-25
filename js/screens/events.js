@@ -116,10 +116,17 @@ export default async function events() {
   );
 
   const card = (ev) => {
-    const votes     = ev.votes     || {};
-    const dates     = ev.dates     || [];
-    const ideas     = ev.ideas     || [];
+    const votes      = ev.votes      || {};
+    const dates      = ev.dates      || [];
+    const ideas      = ev.ideas      || [];
     const looseSlots = ev.looseSlots || [];
+
+    // 未読バッジ: ev.updatedAt が自分の最終既読より新しければ表示
+    const lastSeen = parseInt(localStorage.getItem(`ojisan_${group}_ev_seen_${ev.id}`) || '0');
+    const hasUpdate = !!(ev.updatedAt && ev.updatedAt > lastSeen);
+
+    // コメント数合計（やりたいことバッジ）
+    const totalComments = ideas.reduce((n, idea) => n + (idea.comments || []).length, 0);
 
     const tally = dates.map(d => {
       let yes = 0, maybe = 0;
@@ -156,15 +163,20 @@ export default async function events() {
       onclick: () => navigate('eventdetail', { id: ev.id }),
     },
       h('div', { class: 'item-head' },
-        h('span', {
-          class: 'kind-badge' + (ev.confirmed ? ' confirmed-badge' : ev.kind === 'loose' ? ' loose' : ''),
-        }, ev.confirmed ? '✅ 確定' : ev.kind === 'loose' ? '🍃 ゆる枠' : '🗓 予定'),
+        h('div', { class: 'item-head-left' },
+          h('span', {
+            class: 'kind-badge' + (ev.confirmed ? ' confirmed-badge' : ev.kind === 'loose' ? ' loose' : ''),
+          }, ev.confirmed ? '✅ 確定' : ev.kind === 'loose' ? '🍃 ゆる枠' : '🗓 予定'),
+          hasUpdate ? h('div', { class: 'ev-update-dot' }) : null,
+        ),
         h('span', { class: 'ago' }, timeAgo(ev.createdAt)),
       ),
       h('div', { class: 'card-text' }, ev.title),
       ev.memo ? h('p', { class: 'card-memo' }, ev.memo) : null,
       dateInfo,
-      ideas.length ? h('p', { class: 'idea-count' }, `💡 やりたいこと ${ideas.length}`) : null,
+      ideas.length ? h('p', { class: 'idea-count' },
+        `💡 やりたいこと ${ideas.length}` + (totalComments > 0 ? `　💬 ${totalComments}` : ''),
+      ) : null,
     );
   };
 

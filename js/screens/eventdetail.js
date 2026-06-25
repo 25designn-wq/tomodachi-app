@@ -1,7 +1,7 @@
 import { h, topbar, setChildren } from '../dom.js';
 import { getMe, getGroup } from '../state.js';
 import { getStore } from '../firebase.js';
-import { fmtDate, catMeta } from '../ui.js';
+import { fmtDate, catMeta, timeAgo } from '../ui.js';
 import { navigate } from '../router.js';
 
 const VOTE_BTNS = [
@@ -16,6 +16,11 @@ export default async function eventdetail(params = {}) {
   const id = params.id;
   const store = await getStore();
 
+  // 既読タイムスタンプ管理（バッジ制御用）
+  const seenKey = `ojisan_${group}_ev_seen_${id}`;
+  const markSeen = () => localStorage.setItem(seenKey, String(Date.now()));
+  markSeen();
+
   let ev = null;
   let items = [];
   let pickerOpen = false;
@@ -23,6 +28,7 @@ export default async function eventdetail(params = {}) {
   let deleteConfirmOpen = false;
   let goConfirmOpen = false;
   let unconfirmOpen = false;
+  let openCommentIdx = null; // コメント展開中の idea インデックス
   const body = h('div', { class: 'scroll pad' });
 
   const flash = (msg) => {
@@ -67,7 +73,8 @@ export default async function eventdetail(params = {}) {
         const v = newDate.value;
         if (!v) { flash('日付を選んでね'); return; }
         if (dates.includes(v)) { flash('すでに追加済み'); return; }
-        store.events.update(group, id, { dates: [...dates, v].sort() });
+        store.events.update(group, id, { dates: [...dates, v].sort(), updatedAt: Date.now() });
+        markSeen();
         newDate.value = '';
       } }, '＋ 追加');
 
@@ -110,19 +117,53 @@ export default async function eventdetail(params = {}) {
           h('button', { class: 'btn-primary', style: { width: 'auto', padding: '10px 18px' }, onclick: () => {
             const t = inp.value.trim();
             if (!t) { inp.focus(); return; }
-            store.events.update(group, id, { ideas: [...ideas, { category: 'sonota', text: t }] });
+            store.events.update(group, id, { ideas: [...ideas, { category: 'sonota', text: t }], updatedAt: Date.now() });
+            markSeen();
             ideaInputOpen = false;
           } }, '追加'),
         ),
       );
     })() : null;
 
+    // やりたいこと行（コメント付き）
     const ideaRows = ideas.map((idea, i) => {
       const m = catMeta(idea.category);
-      return h('div', { class: 'idea-row' },
-        h('span', { class: 'idea-ico', style: { background: m.color } }, m.icon),
-        h('span', { class: 'idea-text' }, idea.text),
-        h('button', { class: 'idea-del', onclick: () => removeIdea(i) }, '×'),
+      const comments = idea.comments || [];
+      const isOpen = openCommentIdx === i;
+
+      let commentSection = null;
+      if (isOpen) {
+        const inp = h('input', { class: 'idea-comment-input', placeholder: 'コメント…', maxlength: '100' });
+        setTimeout(() => inp.focus(), 40);
+        commentSection = h('div', { class: 'idea-comments' },
+          ...comments.map(c => h('div', { class: 'idea-comment' },
+            h('span', { class: 'idea-comment-av' }, (c.by || '?')[0]),
+            h('div', { class: 'idea-comment-body' },
+              h('span', { class: 'idea-comment-who' }, c.by),
+              h('span', { class: 'idea-comment-text' }, c.text),
+              h('span', { class: 'idea-comment-at' }, timeAgo(c.at)),
+            ),
+          )),
+          h('div', { class: 'idea-comment-form' },
+            inp,
+            h('button', { class: 'idea-comment-send',
+              onclick: (e) => { e.stopPropagation(); addComment(i, inp.value); },
+            }, '送る'),
+          ),
+        );
+      }
+
+      return h('div', { class: 'idea-item' },
+        h('div', { class: 'idea-row' },
+          h('span', { class: 'idea-ico', style: { background: m.color } }, m.icon),
+          h('span', { class: 'idea-text' }, idea.text),
+          h('button', {
+            class: 'idea-comment-btn' + (comments.length > 0 ? ' has-comments' : ''),
+            onclick: (e) => { e.stopPropagation(); openCommentIdx = (isOpen ? null : i); render(); },
+          }, comments.length > 0 ? `💬 ${comments.length}` : '💬'),
+          h('button', { class: 'idea-del', onclick: () => removeIdea(i) }, '×'),
+        ),
+        commentSection,
       );
     });
 
@@ -139,7 +180,8 @@ export default async function eventdetail(params = {}) {
             h('div', { class: 'inline-confirm-btns' },
               h('button', { class: 'btn-sub', onclick: () => { unconfirmOpen = false; render(); } }, 'やめる'),
               h('button', { class: 'btn-sub', onclick: () => {
-                store.events.update(group, id, { confirmed: false });
+                store.events.update(group, id, { confirmed: false, updatedAt: Date.now() });
+                markSeen();
                 unconfirmOpen = false;
                 render();
               } }, '取り消す'),
@@ -155,7 +197,8 @@ export default async function eventdetail(params = {}) {
             h('div', { class: 'inline-confirm-btns' },
               h('button', { class: 'btn-sub', onclick: () => { goConfirmOpen = false; render(); } }, 'やっぱりやめる'),
               h('button', { class: 'btn-primary', style: { width: 'auto', padding: '12px 24px' }, onclick: () => {
-                store.events.update(group, id, { confirmed: true });
+                store.events.update(group, id, { confirmed: true, updatedAt: Date.now() });
+                markSeen();
                 goConfirmOpen = false;
               } }, '🎉 決行！'),
             ),
@@ -210,16 +253,33 @@ export default async function eventdetail(params = {}) {
     const mine = { ...(votes[me] || {}) };
     if (mine[d] === val) delete mine[d]; else mine[d] = val;
     votes[me] = mine;
-    store.events.update(group, id, { votes });
+    store.events.update(group, id, { votes, updatedAt: Date.now() });
+    markSeen();
   };
+
   const removeIdea = (i) => {
     const ideas = [...(ev.ideas || [])]; ideas.splice(i, 1);
-    store.events.update(group, id, { ideas });
+    store.events.update(group, id, { ideas, updatedAt: Date.now() });
+    markSeen();
   };
+
   const addIdeaFromItem = (it) => {
     const ideas = [...(ev.ideas || []), { itemId: it.id, category: it.category, text: it.text || it.title || '' }];
     pickerOpen = false;
-    store.events.update(group, id, { ideas });
+    store.events.update(group, id, { ideas, updatedAt: Date.now() });
+    markSeen();
+  };
+
+  const addComment = (ideaIdx, text) => {
+    const t = text.trim();
+    if (!t) return;
+    const newIdeas = (ev.ideas || []).map((idea, i) => {
+      if (i !== ideaIdx) return idea;
+      const comments = [...(idea.comments || []), { by: me, text: t, at: Date.now() }];
+      return { ...idea, comments };
+    });
+    store.events.update(group, id, { ideas: newIdeas, updatedAt: Date.now() });
+    markSeen();
   };
 
   const unsubE = store.events.watch(group, list => { ev = list.find(e => e.id === id) || null; render(); });
