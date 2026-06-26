@@ -4,6 +4,7 @@ import { getStore } from '../firebase.js';
 import { CATEGORIES, catMeta, urlCard, REACTIONS, timeAgo, bottomNav, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
 import { openPostFlow } from '../postflow.js';
+import { openEventFlow } from '../eventflow.js';
 import { throwBurst, playBarrage } from '../effects.js';
 
 const COLORS = ['#ff7a45', '#10b981', '#6366f1', '#ef4444', '#0ea5e9', '#f59e0b', '#7c5cff'];
@@ -158,8 +159,7 @@ export default async function home(params = {}) {
     });
     store.items.update(group, it.id, { reviews });
   };
-  const toEvent = (it) => navigate('addevent', {
-    prefillTitle: (it.slots && it.slots.x) || it.text || it.title || '',
+  const toEvent = (it) => openEventFlow({ store, group, me,
     idea: { itemId: it.id, category: it.category, text: it.text || it.title || '', url: it.url || '', images: it.images || [] },
   });
   const del = (it) => { if (confirm('この投稿を消す？')) store.items.remove(group, it.id); };

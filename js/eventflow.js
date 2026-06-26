@@ -6,7 +6,7 @@ const LOOSE_SLOTS = ['今週末', '来週末', '連休中', '来月中', '未定
 const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const raf2 = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
 
-export function openEventFlow({ store, group, me, prefill = null }) {
+export function openEventFlow({ store, group, me, prefill = null, idea = null }) {
   const scrim = h('div', { class: 'scrim' });
   const layer = h('div', { class: 'flow-layer' });
   document.body.append(scrim, layer);
@@ -52,7 +52,7 @@ export function openEventFlow({ store, group, me, prefill = null }) {
   // Step 2: 入力フォーム（kind別）
   const stepForm = (kind) => {
     const title = h('input', { class: 'line-input', type: 'text',
-      value: prefill?.title || '',
+      value: prefill?.title || idea?.text || '',
       placeholder: kind === 'loose' ? '例）今度みんなで飲もう' : '例）河口湖でキャンプ',
       maxlength: '60' });
     const memo = h('input', { class: 'line-input sub', type: 'text', placeholder: 'メモ（任意）' });
@@ -104,7 +104,7 @@ export function openEventFlow({ store, group, me, prefill = null }) {
         memo: memo.value.trim(),
         dates: [...dates],
         looseSlots: [...looseSlots],
-        votes: {}, ideas: [],
+        votes: {}, ideas: idea ? [idea] : [],
         createdBy: me,
         updatedAt: Date.now(),
       });

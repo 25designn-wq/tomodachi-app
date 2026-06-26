@@ -2,12 +2,12 @@
 import { h } from './dom.js';
 
 const STEPS       = 4;
-const APPROACH_MS = 1800; // リングが外→内まで縮む時間
+const APPROACH_MS = 1400; // リングが外→内まで縮む時間
 
 const raf2 = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
 
 export function openTeruteruFlow({ group, onComplete }) {
-  let step = 0, finished = false, rafId = null;
+  let step = 0, finished = false, rafId = null, resetTimer = null;
   let approachT = 0, lastT = null;
 
   const scrim = h('div', { class: 'scrim' });
@@ -17,6 +17,7 @@ export function openTeruteruFlow({ group, onComplete }) {
 
   function doClose(delay = 0) {
     cancelAnimationFrame(rafId);
+    clearTimeout(resetTimer);
     setTimeout(() => {
       scrim.classList.remove('is-open');
       document.body.style.overflow = '';
@@ -104,9 +105,30 @@ export function openTeruteruFlow({ group, onComplete }) {
     vid.play().then(() => setTimeout(() => vid.pause(), 700)).catch(() => {});
   };
 
+  const totalCountEl = h('span', { class: 'teru-total-count' });
+  const refreshTotalCount = () => {
+    const n = parseInt(localStorage.getItem(`ojisan_${group}_teruteru`) || '0');
+    totalCountEl.textContent = n > 0 ? `${n}体` : '';
+  };
+  refreshTotalCount();
+
+  const resetForNext = () => {
+    vwrap.querySelectorAll('.teru-complete-flash').forEach(el => el.remove());
+    step = 0; finished = false; running = true;
+    approachT = 0; lastT = null;
+    approachRing.style.display = '';
+    tapZone.style.display = '';
+    drawDots();
+    feedEl.className = 'teru-feed';
+    feedEl.textContent = '';
+    vid.currentTime = 0;
+    vid.play().then(() => setTimeout(() => vid.pause(), 100)).catch(() => {});
+    rafId = requestAnimationFrame(updateApproach);
+    refreshTotalCount();
+  };
+
   const complete = () => {
     finished = true;
-    // 完成フラッシュ「びかーーん！」
     const flash = h('div', { class: 'teru-complete-flash' },
       h('img', { src: 'icons/teruteru.svg', class: 'teru-complete-icon', alt: '' }),
       h('div', { class: 'teru-complete-text' }, '完成！'),
@@ -120,7 +142,13 @@ export function openTeruteruFlow({ group, onComplete }) {
     const n = parseInt(localStorage.getItem(countKey) || '0') + 1;
     localStorage.setItem(countKey, String(n));
     onComplete?.(n);
-    setTimeout(() => doClose(), 2800);
+
+    // 1.2s後にフェードアウト→自動リセット（連続で作れる）
+    resetTimer = setTimeout(() => {
+      flash.style.transition = 'opacity .3s';
+      flash.style.opacity = '0';
+      resetTimer = setTimeout(resetForNext, 300);
+    }, 1200);
   };
 
   let running = false;
@@ -159,6 +187,7 @@ export function openTeruteruFlow({ group, onComplete }) {
   const card = h('div', { class: 'teru-card', onclick: onTap },
     h('div', { class: 'teru-head' },
       h('span', {}, '☁️ てるてる坊主を作る'),
+      totalCountEl,
       h('button', { class: 'teru-x', onclick: e => { e.stopPropagation(); doClose(); } }, '×'),
     ),
     vwrap,

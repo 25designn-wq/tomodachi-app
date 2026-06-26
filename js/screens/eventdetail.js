@@ -31,6 +31,7 @@ export default async function eventdetail(params = {}) {
   let openCommentIdx = null; // コメント展開中の idea インデックス
   let pendingDelete = null;  // { idx, timer } — 削除保留中
   let undoToastEl = null;
+  let deleteDateConfirm = null; // 候補日削除確認中の日付文字列
   const body = h('div', { class: 'scroll pad' });
 
   const flash = (msg) => {
@@ -52,6 +53,17 @@ export default async function eventdetail(params = {}) {
     let voteSection = [];
     if (ev.kind !== 'loose' && !ev.confirmed) {
       const dateRows = dates.map(d => {
+        if (deleteDateConfirm === d) {
+          return h('div', { class: 'card vote-row' },
+            h('div', { class: 'inline-confirm' },
+              h('p', {}, '他の人からも消えますが、本当に削除する？'),
+              h('div', { class: 'inline-confirm-btns' },
+                h('button', { class: 'btn-sub', onclick: () => { deleteDateConfirm = null; render(); } }, 'やめる'),
+                h('button', { class: 'btn-sub danger', onclick: () => deleteDate(d) }, '削除する'),
+              ),
+            ),
+          );
+        }
         const counts = { yes: [], maybe: [], no: [] };
         Object.entries(votes).forEach(([name, v]) => { if (counts[v[d]]) counts[v[d]].push(name); });
         const mine = (votes[me] || {})[d];
@@ -60,7 +72,12 @@ export default async function eventdetail(params = {}) {
           h('button', { class: 'vote-big ' + cls + (mine === val ? ' on' : ''), onclick: () => vote(d, val) }, sym));
 
         return h('div', { class: 'card vote-row' },
-          h('div', { class: 'vote-date' }, fmtDate(d)),
+          h('div', { class: 'vote-date-row' },
+            h('div', { class: 'vote-date' }, fmtDate(d)),
+            h('button', { class: 'vote-date-del',
+              onclick: (e) => { e.stopPropagation(); deleteDateConfirm = d; render(); },
+            }, '🗑'),
+          ),
           h('div', { class: 'vote-big-row' }, ...btns),
           h('div', { class: 'vote-tally' },
             counts.yes.length  ? h('span', { class: 't yes'   }, '○ ' + counts.yes.join('  '))   : null,
@@ -249,6 +266,21 @@ export default async function eventdetail(params = {}) {
       goSection ? h('div', { style: { marginTop: '24px' } }, goSection) : null,
       deleteSection,
     );
+  };
+
+  const deleteDate = (d) => {
+    const dates = ev.dates || [];
+    const votes = ev.votes || {};
+    const newDates = dates.filter(x => x !== d);
+    const newVotes = {};
+    Object.entries(votes).forEach(([name, v]) => {
+      const updated = { ...v };
+      delete updated[d];
+      newVotes[name] = updated;
+    });
+    store.events.update(group, id, { dates: newDates, votes: newVotes, updatedAt: Date.now() });
+    markSeen();
+    deleteDateConfirm = null;
   };
 
   const vote = (d, val) => {

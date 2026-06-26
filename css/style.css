@@ -213,6 +213,7 @@ a { color: inherit; }
   display: flex; align-items: center; justify-content: space-between;
   width: 100%; font-weight: 800; font-size: 15px; color: var(--ink);
 }
+.teru-total-count { font-size: 13px; font-weight: 800; color: #0369a1; flex: 1; text-align: center; }
 .teru-x {
   background: #f1f5f9; border: none; border-radius: 50%;
   width: 30px; height: 30px; font-size: 15px; cursor: pointer; flex-shrink: 0;
@@ -476,7 +477,10 @@ hr { border: none; border-top: 1px solid var(--line); margin: 22px 0; }
 /* ---- 予定の調整 ---- */
 .ev-title { font-size: 22px; margin: 4px 0 2px; }
 .vote-row { display: flex; flex-direction: column; gap: 10px; }
+.vote-date-row { display: flex; align-items: center; justify-content: space-between; }
 .vote-date { font-weight: 800; font-size: 17px; }
+.vote-date-del { border: none; background: none; font-size: 16px; cursor: pointer; opacity: .4; padding: 4px 8px; border-radius: 8px; line-height: 1; }
+.vote-date-del:active { opacity: 1; background: #fee2e2; }
 .vote-btns { display: flex; gap: 8px; }
 .vote {
   flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 12px;

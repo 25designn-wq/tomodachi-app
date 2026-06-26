@@ -3,6 +3,7 @@ import { getMe, getGroup } from '../state.js';
 import { getStore } from '../firebase.js';
 import { catMeta, timeAgo, bottomNav, enableSwipeNav } from '../ui.js';
 import { navigate } from '../router.js';
+import { openEventFlow } from '../eventflow.js';
 
 const COLORS = ['#ff7a45', '#10b981', '#6366f1', '#ef4444', '#0ea5e9', '#f59e0b', '#7c5cff'];
 const colorFor = s => COLORS[[...(s || '?')].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
@@ -168,8 +169,7 @@ export default async function activity(params = {}) {
       h('div', { class: 'act-empathy-line' },
         '🤙 ', names.join('・'), ' が共感（', h('strong', {}, String(total)), ' 件）',
       ),
-      h('button', { class: 'act-btn accent', onclick: () => navigate('addevent', {
-        prefillTitle: (item.slots && item.slots.x) || item.text || '',
+      h('button', { class: 'act-btn accent', onclick: () => openEventFlow({ store, group, me,
         idea: { itemId: item.id, category: item.category, text: item.text || '', url: item.url || '', images: item.images || [] },
       })}, '🗓 予定にする'),
     );
