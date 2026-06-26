@@ -188,9 +188,7 @@ export default async function eventdetail(params = {}) {
     });
 
     // ---- 決行ボタン ----
-    const allYesOnSomeDate = dates.length > 0 && Object.keys(votes).length > 0 &&
-      dates.some(d => Object.values(votes).every(v => v[d] === 'yes'));
-    const canConfirm = !ev.confirmed && (isCreator || allYesOnSomeDate);
+    const canConfirm = !ev.confirmed;
 
     let goSection = null;
     if (ev.confirmed) {
